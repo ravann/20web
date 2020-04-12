@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "path": "1_form_validator"
+    },
+    {
+      "path": "2_movie_booking"
+    }
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "2_movie_booking"
+  }
+}
