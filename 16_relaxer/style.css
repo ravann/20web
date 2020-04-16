@@ -87,10 +87,29 @@ body {
 }
 
 .container.grow {
-  animation: grow-container 3a linear forwards;
+  animation: grow-container 3s linear forwards;
 }
 
-@keyframes {
+@keyframes grow-container {
   from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.2);
+  }
+}
+
+.container.shrink {
+  animation: shrink-container 3s linear forwards;
+}
+
+@keyframes shrink-container {
+  from {
+    transform: scale(1.2);
+  }
+
+  to {
+    transform: scale(1);
   }
 }
