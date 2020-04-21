@@ -17,9 +17,10 @@ import { Player1 } from "./player.js";
 import { CoOrd } from "./player.js";
 
 class Dice {
+  rolledValue = 0;
   constructor() {}
 
-  getRolledValue() {
+  roll() {
     // Check if we want to give 12
     if (Math.random() * 1000 <= 10) {
       return 12;
@@ -29,24 +30,15 @@ class Dice {
     if (roll === 0) {
       roll = 6;
     }
-    return roll;
+    this.rolledValue = roll;
+  }
+
+  getRolledValue() {
+    return this.rolledValue;
   }
 }
 
 /// Handle canvas
-
-const coinProp = {
-  x: 0,
-  y: 0,
-  size: 5,
-  player: 1,
-};
-
-const playerProps = {
-  turn: false,
-  coins: [],
-  color: "white",
-};
 
 class HomeCoOrds {
   homes = [];
@@ -73,6 +65,16 @@ class HomeCoOrds {
   }
 }
 
+// Coin class
+class Coin {
+  player;
+  color;
+  constructor(p, c) {
+    this.player = p;
+    this.color = c;
+  }
+}
+
 class BoardCell {
   ctx;
   left;
@@ -80,6 +82,7 @@ class BoardCell {
   height;
   width;
   coin;
+  coord;
 
   constructor(ctx, left, top, height, width) {
     this.ctx = ctx;
@@ -87,6 +90,14 @@ class BoardCell {
     this.top = top;
     this.height = height;
     this.width = width;
+  }
+
+  setCoord(c) {
+    this.coord = c;
+  }
+
+  getCoord() {
+    return this.coord;
   }
 
   render() {
@@ -100,14 +111,47 @@ class BoardCell {
     ctx.strokeRect(this.left, this.top, this.width, this.height);
     ctx.fill();
     ctx.closePath();
+    this.renderCoins();
+  }
+
+  // TODO: Fox the logic to show multiple coins
+  renderCoins() {
+    if (this.coin != null || this.coin != undefined) {
+      ctx.beginPath();
+      ctx.arc(
+        this.left + this.width / 2,
+        this.top + this.height / 2,
+        8,
+        0,
+        360
+      );
+      ctx.fillStyle = this.coin.color;
+      ctx.fill();
+      ctx.closePath();
+    }
   }
 
   addCoin(c) {
-    if (this.coin !== null) {
+    if (this.coin != null || this.coin != undefined) {
       // Return this coin to players home base
       // If the new coin belongs to the same player as existing coin, refuse movement
     }
     this.coin = c;
+  }
+
+  hasCoin() {
+    if (this.coin === undefined || this.coin === null) {
+      return false;
+    }
+    return true;
+  }
+
+  removeCoin(player) {
+    if (this.hasCoin) {
+      var coin = this.coin;
+      this.coin = null;
+      return coin;
+    }
   }
 }
 
@@ -135,7 +179,6 @@ class BoardHomeCell extends BoardCell {
   // TODO: Fox the logic to show multiple coins
   renderCoins() {
     for (let i = 0; i < this.coins.length; i++) {
-      console.log("Rendering coins");
       var coin = this.coins[0];
       ctx.beginPath();
       ctx.arc(
@@ -154,16 +197,19 @@ class BoardHomeCell extends BoardCell {
   addCoin(c) {
     this.coins.push(c);
   }
-}
 
-// Coin class
-class Coin {
-  player;
-  color;
-  playerRelativeIndex = 0;
-  constructor(p, c) {
-    this.player = p;
-    this.color = c;
+  hasCoin() {
+    if (this.coins.length == 0) {
+      return false;
+    }
+    return true;
+  }
+
+  removeCoin(player) {
+    if (this.hasCoin()) {
+      var coin = this.coins.pop();
+      return coin;
+    }
   }
 }
 
@@ -213,6 +259,8 @@ class Board {
             this.cellWidth
           );
         }
+        var coord = new CoOrd(i, j);
+        this.cells[i][j].setCoord(coord);
       }
     }
   }
@@ -242,9 +290,27 @@ class Board {
   getCellAtCoordinate(x, y) {
     var col = Math.floor(x / this.cellWidth);
     var row = Math.floor(y / this.cellHeight);
-    console.log(`Cell is : ${col}, ${row}`);
+    return this.cells[col][row];
+  }
+
+  moveCoinFromCellBy(player, cell, move) {
+    var coord = player.getTargetCoord(cell.getCoord(), move);
+    if (coord != null) {
+      var tcell = this.getCellAtCoordinate(
+        coord.col * 90 + 2,
+        coord.row * 90 + 2
+      );
+      var coin = cell.removeCoin(player);
+      tcell.addCoin(coin);
+      console.log(`target cell is: `);
+      console.log(tcell);
+    } else {
+      // TODO: Cant move coin
+    }
   }
 }
+
+// MAIN
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -255,11 +321,22 @@ board.render();
 console.log("Control is at the end!!!");
 
 var d = new Dice();
-function handleClickOnCanvas(e) {
-  console.log(e);
-  console.log(d.getRolledValue());
+function handleUserAction(e) {
+  d.roll();
 
-  board.getCellAtCoordinate(e.offsetX, e.offsetY);
+  var cell = board.getCellAtCoordinate(e.offsetX, e.offsetY);
+  if (cell.hasCoin()) {
+    board.moveCoinFromCellBy(board.players[0], cell, d.getRolledValue());
+  }
+  board.render();
 }
 
-canvas.addEventListener("click", handleClickOnCanvas);
+canvas.addEventListener("click", handleUserAction);
+
+/*
+TODO: 
+1. Try move the coin over the path
+2. Fix render coins to render multiple coins
+3. Add 4 players
+4. Teach to kill coin
+*/

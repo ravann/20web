@@ -32,6 +32,25 @@ export class Player1 extends Player {
     this.initializePath();
   }
 
+  getTargetCoord(coord, move) {
+    var idx = -1;
+    for (let i = 0; i < this.path.length; i++) {
+      var c = this.path[i];
+      if (coord.col == c.col && coord.row == c.row) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx > -1) {
+      console.log(`Cell is at index : ${idx}, moving it by ${move}`);
+      console.log(`New coordiate : `);
+      console.log(this.path[idx + move]);
+      return this.path[idx + move];
+    } else {
+      return null;
+    }
+  }
+
   initializePath() {
     this.path = [
       // Start from home base - first row
