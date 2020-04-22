@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
+
 * {
   box-sizing: border-box;
 }
@@ -15,8 +17,25 @@ body {
 /** Define Game rules */
 
 h1 {
-  font-size: 45px;
+  font-size: 30px;
   color: white;
+}
+
+.message {
+  font-size: 20px;
+  font-family: Montserrat, sans-serif;
+  color: rgb(206, 222, 236);
+}
+
+.message.err {
+  font-size: 20px;
+  font-family: Montserrat, sans-serif;
+  color: red;
+}
+
+.top_screen {
+  display: flex;
+  flex-direction: row;
 }
 
 .btn {
@@ -38,6 +57,13 @@ h1 {
 
 .btn:active {
   transform: scale(0.98);
+}
+
+button:disabled,
+button[disabled] {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
 }
 
 .rules-btn {
@@ -62,6 +88,21 @@ h1 {
 
 .rules.show {
   transform: translateX(0px);
+}
+
+/** Roll dice **/
+.roll_dice {
+  display: flex;
+  flex-direction: column;
+  padding-left: 60px;
+  padding-top: 25px;
+}
+
+.roll_dice_lbl {
+  padding-top: 10px;
+  color: aliceblue;
+  font-size: 20px;
+  font-family: Montserrat, sans-serif;
 }
 
 /** Define board & canvas **/
