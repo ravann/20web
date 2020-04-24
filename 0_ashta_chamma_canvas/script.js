@@ -28,7 +28,7 @@ function setDiceMessage(msg) {
 //////// DICE ///////
 
 import { Player1, Player2, Player3, Player4 } from "./player.js";
-import { CoOrd } from "./player.js";
+import { CoOrd, HomeCoOrds } from "./player.js";
 
 class Dice {
   rolls = [];
@@ -85,12 +85,31 @@ const d = new Dice();
 
 const messageLbl = document.getElementById("message");
 
+const rollBackBtn = document.getElementById("roll_back_btn");
+rollBackBtn.disabled = true;
+rollBackBtn.style.visibility = false;
+
 // Event handers
 
 function handleRollDice(e) {
+  rollBackBtn.disabled = true;
   console.log(e);
   d.roll();
   const lastRoll = d.getLastRolled();
+
+  // Check if the player has a move
+  if (!board.checkPlayerHasMove(d.getLastRolled())) {
+    var nextPlayer =
+      board.turnPlayer + 1 == board.totalPlayers ? 0 : board.turnPlayer + 1;
+    setBoardErrorMessage(
+      `${d.getLastRolled()}! ${
+        board.players[board.turnPlayer].name
+      } no moves, ${board.players[nextPlayer].name} your turn`
+    );
+    prepareForNextTurn(false);
+    return;
+  }
+
   if (lastRoll == 6 || lastRoll == 12) {
     setDiceMessage(`${lastRoll}!!  Roll Again.`);
   } else {
@@ -101,32 +120,16 @@ function handleRollDice(e) {
 
 rollDiceBtn.addEventListener("click", handleRollDice);
 
-///// Handle BOARD
-
-class HomeCoOrds {
-  homes = [];
-  constructor() {
-    this.homes.push(new CoOrd(3, 0));
-    this.homes.push(new CoOrd(1, 1));
-    this.homes.push(new CoOrd(5, 1));
-    this.homes.push(new CoOrd(0, 3));
-    this.homes.push(new CoOrd(6, 3));
-    this.homes.push(new CoOrd(1, 5));
-    this.homes.push(new CoOrd(5, 5));
-    this.homes.push(new CoOrd(3, 6));
-    this.homes.push(new CoOrd(3, 3));
-    console.log(this.homes);
-  }
-
-  isHome(col, row) {
-    for (let i = 0; i < this.homes.length; i++) {
-      if (this.homes[i].col === col && this.homes[i].row === row) {
-        return true;
-      }
-    }
-    return false;
-  }
+function handleRollBack(e) {
+  board = rollbackBoard;
+  board.render();
+  setBoardMessage(`${board.players[board.turnPlayer].name} roll again`);
+  rollBackBtn.disabled = true;
+  rollDiceBtn.disabled = false;
 }
+rollBackBtn.addEventListener("click", handleRollBack);
+
+///// Handle BOARD
 
 // Coin class
 class Coin {
@@ -225,6 +228,7 @@ class BoardCell {
 
 class BoardHomeCell extends BoardCell {
   coins = [];
+  coinRadius = 6;
 
   constructor(ctx, left, top, height, width) {
     super(ctx, left, top, height, width);
@@ -252,7 +256,7 @@ class BoardHomeCell extends BoardCell {
     for (let i = 0; i < this.coins.length; i++) {
       var coin = this.coins[i];
       ctx.beginPath();
-      ctx.arc(x, y, this.coinRadius, 0, 360);
+      ctx.arc(x, y, this.coinRadius, 0, 2 * Math.PI);
       ctx.fillStyle = coin.color;
       ctx.fill();
       ctx.closePath();
@@ -404,6 +408,7 @@ class Board {
     var coin = cell.removeCoin();
     this.cells[coords.col][coords.row].addCoin(coin);
     this.killed = true;
+    this.players[this.turnPlayer].markKill();
   }
 
   doesPlayerCoinExists(cell) {
@@ -414,22 +419,96 @@ class Board {
         }
       }
     } else {
-      if (cell.coin.player == this.players[this.turnPlayer]) {
+      if (cell.hasCoin() && cell.coin.player == this.players[this.turnPlayer]) {
         return true;
       }
     }
     return false;
   }
 
-  changeTurn() {
+  changeTurn(changeMessage = true) {
     this.turnPlayer++;
-    if (this.turnPlayer == 4) {
+    if (this.turnPlayer == this.totalPlayers) {
       this.turnPlayer = 0;
     }
-    const name = this.players[this.turnPlayer].name;
-    setBoardMessage(`Its ${name} players turn`);
+    if (changeMessage) {
+      const name = this.players[this.turnPlayer].name;
+      setBoardMessage(`Its ${name} players turn`);
+    }
   }
 
+  /**
+   * Checks if the player can move from this cell
+   *
+   * 1. Check if we can get the coords
+   * 2. If the target coords is a home cell, return true
+   * 3. If the target coords is a normal cell, check if it has the same players coin
+   *
+   * @param cell
+   * @param move
+   */
+  canPlayerMoveFromCell(cell, move) {
+    var player = this.players[this.turnPlayer];
+    var coord = player.getTargetCoord(cell.getCoord(), move);
+
+    // 1. Check if we can get the coords
+    if (coord == null) {
+      return false;
+    }
+
+    //2. If the target coords is a home cell, return true
+    var targetCell = this.cells[coord.col][coord.row];
+    if (targetCell.isHome()) {
+      return true;
+    }
+
+    // 3. Check if the target cell has the player coin
+    if (
+      targetCell.hasCoin() &&
+      targetCell.coin.player.name == this.players[this.turnPlayer].name
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   *
+   * Logic:
+   * Go through each cell and if that cell has the coin, check if the player can make the move
+   *
+   * returns true if the player can make a move
+   *
+   * @param {int} move
+   */
+  checkPlayerHasMove(move) {
+    for (let col = 0; col < this.cells.length; col++) {
+      var rows = this.cells[col];
+      for (let row = 0; row < rows.length; row++) {
+        var cell = this.cells[col][row];
+        if (cell.hasCoin() && this.doesPlayerCoinExists(cell)) {
+          console.log(cell.coord);
+          if (this.canPlayerMoveFromCell(cell, move)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   *
+   * Moves the coim from "cell" by "move" positions.
+   * If the coin reaches the final cell, the system will also check if all coins are in that cell and remove player from the list
+   *
+   * Returns true if the move succeed, else false
+   * Sets the error message if any
+   *
+   * @param {BoardCell} cell
+   * @param {int} move
+   */
   moveCoinFromCell(cell, move) {
     var coord = this.players[this.turnPlayer].getTargetCoord(
       cell.getCoord(),
@@ -446,31 +525,38 @@ class Board {
     console.log(`target cell is: `);
     console.log(tcell);
 
-    // Target cell is home cell, just add this
-    if (tcell.isHome()) {
-      var coin = cell.removeCoin(this.players[this.turnPlayer]);
-      tcell.addCoin(coin);
-      return true;
-    }
     // Target cell is not home cell and does have a coin.
     // Kill the coin if it belongs to other player
     // If its same player, refuse to move
-    if (tcell.hasCoin()) {
+    if (tcell.hasCoin() && !tcell.isHome()) {
       if (tcell.coin.player.name == this.players[this.turnPlayer].name) {
-        setBoardErrorMessage("You cannot kill your own coin!!!");
+        setBoardErrorMessage(
+          `${this.players[this.turnPlayer].name}, you cannot kill your own coin`
+        );
         return false;
       } else {
         this.killCoin(tcell);
-        var coin = cell.removeCoin(this.players[this.turnPlayer]);
-        console.log("Adding new coin to cell");
-        console.log(coin);
-        tcell.addCoin(coin);
-        return true;
       }
     }
     // Target cell is not home and doesnt have a coin
     var coin = cell.removeCoin(this.players[this.turnPlayer]);
     tcell.addCoin(coin);
+    // If the target cell is 3,3, check if all player coins are in here and delete the player
+    var coords = tcell.getCoord();
+    if (coords.col == 3 && coords.row == 3) {
+      var pcc = 0; // player coin count
+      for (let i = 0; i < tcell.coins.length; i++) {
+        if (tcell.coins[i].player.name == this.players[this.turnPlayer].name) {
+          pcc += 1;
+        }
+      }
+      if (pcc == this.coinsPerPlayer) {
+        this.players.splice(this.turnPlayer, 1);
+        this.totalPlayers -= 1;
+        this.turnPlayer =
+          this.turnPlayer == 0 ? this.totalPlayers - 1 : this.turnPlayer - 1;
+      }
+    }
     return true;
   }
 }
@@ -482,44 +568,80 @@ const ctx = canvas.getContext("2d");
 
 var board = new Board(ctx, 7, 7, 90, 90);
 board.render();
+var rollbackBoard;
 
 console.log("Control is at the end!!!");
 
 // EVENT HANDLERS
+
+function prepareForNextTurn(changeMessage = true) {
+  board.changeTurn(changeMessage);
+  d.clearRolls();
+  rollDiceBtn.disabled = false;
+}
+
 function handleUserAction(e) {
+  var cell = board.getCellAtCoordinate(e.offsetX, e.offsetY);
+  console.log(`${cell.coord.col}, ${cell.coord.row}`);
+  // Dont move if dice button is active
   if (rollDiceBtn.disabled == false) {
     return;
   }
 
+  // Get the coordinates of the cell clicked
   var cell = board.getCellAtCoordinate(e.offsetX, e.offsetY);
+  console.log(cell);
 
-  if (cell.hasCoin() && board.doesPlayerCoinExists(cell)) {
-    var out = board.moveCoinFromCell(cell, d.getRolledValue());
-    if (out == false) {
-      return;
+  // Act if player has coin in the cell, otherwise ignore the call
+  if (!(cell.hasCoin() && board.doesPlayerCoinExists(cell))) {
+    if (cell.hasCoin()) {
+      setBoardErrorMessage(
+        `${board.players[board.turnPlayer].name}, can only move your coin`
+      );
     }
-    // If roll is successful ...
-    d.clearARoll();
-    board.render();
-
-    if (board.hasKill()) {
-      board.clearKill();
-      rollDiceBtn.disabled = false;
-      setBoardMessage(`${board.players[board.turnPlayer].name} roll again`);
-      return;
-    }
-
-    // If there are more to place, ask player to continue placing coins
-    if (d.hasMoreRolls()) {
-      return;
-    }
-
-    board.changeTurn();
-    d.clearRolls();
-    rollDiceBtn.disabled = false;
-  } else if (cell.hasCoin()) {
-    setBoardErrorMessage("You can only move your coin");
+    return;
   }
+
+  // Disable the rollback button if user want to rollback the change
+  rollBackBtn.disabled = false;
+  rollbackBoard = jQuery.extend(true, {}, board);
+
+  // Players coin is clicked,
+
+  // try to move the coin ...
+  var out = board.moveCoinFromCell(cell, d.getRolledValue());
+  if (out == false) {
+    const canMove = board.checkPlayerHasMove(d.getRolledValue);
+    if (canMove == false) {
+      var nextPlayer =
+        board.turnPlayer + 1 == board.totalPlayers ? 0 : board.turnPlayer + 1;
+      setBoardErrorMessage(
+        `${d.getLastRolled()}! ${
+          board.players[board.turnPlayer].name
+        } no moves, ${board.players[nextPlayer].name} your turn`
+      );
+      prepareForNextTurn(false);
+    }
+    return;
+  }
+  // If roll is successful ...
+  d.clearARoll();
+  board.render();
+
+  if (board.hasKill()) {
+    board.clearKill();
+    rollDiceBtn.disabled = false;
+    setBoardMessage(`${board.players[board.turnPlayer].name} roll again`);
+    setDiceMessage(`Please roll`);
+    return;
+  }
+
+  // If there are more to place, ask player to continue placing coins
+  if (d.hasMoreRolls()) {
+    return;
+  }
+
+  prepareForNextTurn();
 }
 
 canvas.addEventListener("click", handleUserAction);

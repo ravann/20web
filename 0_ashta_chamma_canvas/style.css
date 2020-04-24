@@ -9,9 +9,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   margin: 0;
+  font-family: Montserrat, sans-serif;
 }
 
 /** Define Game rules */
@@ -21,30 +21,18 @@ h1 {
   color: white;
 }
 
-.message {
-  font-size: 20px;
-  font-family: Montserrat, sans-serif;
-  color: rgb(206, 222, 236);
-}
-
-.message.err {
-  font-size: 20px;
-  font-family: Montserrat, sans-serif;
-  color: red;
-}
-
-.top_screen {
-  display: flex;
-  flex-direction: row;
-}
-
 .btn {
   cursor: pointer;
   border: 0;
-  padding: 10px 20px;
+  padding-left: 20px;
+  padding-right: 20px;
   background-color: #000;
   color: #fff;
   border-radius: 5px;
+}
+
+.btn.rollback {
+  visibility: hidden;
 }
 
 .btn:focus {
@@ -70,6 +58,7 @@ button[disabled] {
   position: absolute;
   top: 30px;
   left: 30px;
+  visibility: hidden;
 }
 
 .rules {
@@ -90,25 +79,53 @@ button[disabled] {
   transform: translateX(0px);
 }
 
-/** Roll dice **/
-.roll_dice {
+/** Top Screen **/
+
+.top_screen {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.message_screen {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-content: center;
+}
+
+.title_message {
+  width: 300px;
+  justify-content: center;
+}
+
+.roll_dice {
+  display: flex;
   padding-left: 60px;
-  padding-top: 25px;
 }
 
 .roll_dice_lbl {
-  padding-top: 10px;
-  color: aliceblue;
+  padding-top: 5px;
+  color: rgb(206, 222, 236);
+  font-size: 16px;
+  align-content: center;
+  width: 100%;
+}
+
+.message {
   font-size: 20px;
-  font-family: Montserrat, sans-serif;
+  color: rgb(206, 222, 236);
+}
+
+.message.err {
+  font-size: 20px;
+  color: red;
 }
 
 /** Define board & canvas **/
 
 canvas {
-  top: 100px;
+  top: 125px;
   display: block;
   border-radius: 5px;
   position: absolute;

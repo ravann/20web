@@ -7,14 +7,17 @@
     <title>Ashta Chamma Game</title>
   </head>
   <body>
+    <div class="title_message">
+      <h1>Ashta Chamma</h1>
+    </div>
     <div class="top_screen">
-      <div class="title_message">
-        <h1>Ashta Chamma</h1>
+      <div class="message_screen">
         <label id="message" class="message">Its Red players turn</label>
+        <label id="roll_dice_lbl" class="roll_dice_lbl">Please roll</label>
       </div>
       <div class="roll_dice">
         <button id="roll_dice_btn" class="btn">Roll Dice</button>
-        <label id="roll_dice_lbl" class="roll_dice_lbl">Please roll</label>
+        <button id="roll_back_btn" class="btn rollback">Roll Back</button>
       </div>
     </div>
     <button id="rules-btn" class="btn rules-btn">Show Rules</button>
@@ -27,6 +30,7 @@
       <button id="close-btn" class="btn">Close</button>
     </div>
     <canvas id="canvas" height="630" width="630"></canvas>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="module" src="script.js"></script>
   </body>
 </html>
