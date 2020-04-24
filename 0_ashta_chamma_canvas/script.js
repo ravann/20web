@@ -238,7 +238,7 @@ class BoardHomeCell extends BoardCell {
     ctx.beginPath();
     ctx.rect(this.left + 1, this.top + 1, this.width - 2, this.height - 2);
     //    ctx.fillStyle = "#0095dd";
-    ctx.fillStyle = "#808080";
+    ctx.fillStyle = "#b4b3b3";
     ctx.fill();
     ctx.closePath();
     ctx.beginPath();
@@ -611,7 +611,7 @@ function handleUserAction(e) {
   // try to move the coin ...
   var out = board.moveCoinFromCell(cell, d.getRolledValue());
   if (out == false) {
-    const canMove = board.checkPlayerHasMove(d.getRolledValue);
+    const canMove = board.checkPlayerHasMove(d.getRolledValue());
     if (canMove == false) {
       var nextPlayer =
         board.turnPlayer + 1 == board.totalPlayers ? 0 : board.turnPlayer + 1;
@@ -647,14 +647,12 @@ function handleUserAction(e) {
 canvas.addEventListener("click", handleUserAction);
 
 /*
-TODO: 
-1. Fix: When coin cant move any further, game is struck
-4. host the solution on cloud
-5. Allow entry to inner circle only if the player has a kill
+Known issues: 
 
------ 
+1. When the coin moves forward, there is no rollback
+-> When someone has 1 coin, they killed at final point and their next roll doesnt allow them to move, the kill is not reverted
 
-If consequtive 3x6 or 3x12 - pass the turn
+2. If consequtive 3x6 or 3x12 - pass the turn
 
 
 */
