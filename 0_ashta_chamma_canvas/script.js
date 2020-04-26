@@ -25,6 +25,13 @@ function setDiceMessage(msg) {
   messageLbl.className = "message";
 }
 
+function standardize_color(str) {
+  var ccc = document.createElement("canvas");
+  var context = ccc.getContext("2d");
+  context.fillStyle = str;
+  return context.fillStyle;
+}
+
 //////// DICE ///////
 
 import { Player1, Player2, Player3, Player4 } from "./player.js";
@@ -76,6 +83,10 @@ class Dice {
     }
     return 0;
   }
+
+  displayRolls() {
+    setDiceMessage(`Your rolls : ${JSON.stringify(d.rolls)}`);
+  }
 }
 
 // MAIN
@@ -113,7 +124,7 @@ function handleRollDice(e) {
   if (lastRoll == 6 || lastRoll == 12) {
     setDiceMessage(`${lastRoll}!!  Roll Again.`);
   } else {
-    setDiceMessage(`You rolled : ${lastRoll}`);
+    d.displayRolls();
     rollDiceBtn.disabled = true;
   }
 }
@@ -181,7 +192,11 @@ class BoardCell {
     this.renderCoins();
   }
 
-  // TODO: Fox the logic to show multiple coins
+  /**
+   * Renders the coins on the cell
+   *
+   * For a normal cell, the coin is placed at the center of the cell
+   */
   renderCoins() {
     if (this.coin != null || this.coin != undefined) {
       ctx.beginPath();
@@ -203,10 +218,6 @@ class BoardCell {
   }
 
   addCoin(c) {
-    if (this.coin != null || this.coin != undefined) {
-      // Return this coin to players home base
-      // If the new coin belongs to the same player as existing coin, refuse movement
-    }
     this.coin = c;
   }
 
@@ -234,7 +245,7 @@ class BoardHomeCell extends BoardCell {
     super(ctx, left, top, height, width);
   }
 
-  render() {
+  render(color) {
     ctx.beginPath();
     ctx.rect(this.left + 1, this.top + 1, this.width - 2, this.height - 2);
     //    ctx.fillStyle = "#0095dd";
@@ -246,10 +257,27 @@ class BoardHomeCell extends BoardCell {
     ctx.strokeRect(this.left, this.top, this.width, this.height);
     ctx.fill();
     ctx.closePath();
+    if (color != null) {
+      ctx.beginPath();
+      ctx.rect(this.left + 1, this.top + 1, this.width - 2, this.height - 2);
+      //    ctx.fillStyle = "#0095dd";
+      var sc = standardize_color(color);
+      console.log(sc);
+      ctx.fillStyle = sc + "20";
+      ctx.fill();
+      ctx.closePath();
+    }
+
     this.renderCoins();
   }
 
-  // TODO: Fox the logic to show multiple coins
+  /**
+   * Renders the coins on the cell
+   *
+   * For a home cell, the coin are placed starting at top left horizontally
+   * once the cell width limit is reached, it starts creating a new row
+   *
+   */
   renderCoins() {
     var x = this.left + this.coinRadius * 3;
     var y = this.top + this.coinRadius * 3;
@@ -272,10 +300,17 @@ class BoardHomeCell extends BoardCell {
     return true;
   }
 
+  /**
+   * Adds coin to the cell
+   * @param {Coin} c
+   */
   addCoin(c) {
     this.coins.push(c);
   }
 
+  /**
+   * Returns true if the cell has a coin
+   */
   hasCoin() {
     if (this.coins.length == 0) {
       return false;
@@ -283,6 +318,9 @@ class BoardHomeCell extends BoardCell {
     return true;
   }
 
+  /**
+   * Removes coin of the given player from the cell and returns it
+   */
   removeCoin(player) {
     for (let i = 0; i < this.coins.length; i++) {
       if (this.coins[i].player == player) {
@@ -382,7 +420,14 @@ class Board {
     for (let i = 0; i < this.cols; i++) {
       for (let j = 0; j < this.rows; j++) {
         var cell = this.cells[i][j];
-        cell.render();
+        var color = null;
+        for (let p = 0; p < this.players.length; p++) {
+          var hc = this.players[p].getHomeCoOrds();
+          if (hc.col == i && hc.row == j) {
+            color = this.players[p].name;
+          }
+        }
+        cell.render(color);
       }
     }
   }
@@ -638,6 +683,7 @@ function handleUserAction(e) {
 
   // If there are more to place, ask player to continue placing coins
   if (d.hasMoreRolls()) {
+    d.displayRolls();
     return;
   }
 
@@ -653,6 +699,11 @@ Known issues:
 -> When someone has 1 coin, they killed at final point and their next roll doesnt allow them to move, the kill is not reverted
 
 2. If consequtive 3x6 or 3x12 - pass the turn
+
+
+--------
+
+1. Gavvala - sound
 
 
 */
