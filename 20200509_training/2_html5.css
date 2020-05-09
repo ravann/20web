@@ -1,0 +1,32 @@
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap");
+
+body {
+  background-color: honeydew;
+  font-family: Dancing Script, Arial, Helvetica, sans-serif;
+}
+
+.circle {
+  width: 100px;
+  height: 100px;
+  background-color: hotpink;
+  border-top-left-radius: 50px;
+  border-top-right-radius: 50px;
+  border-bottom-left-radius: 50px;
+  border-bottom-right-radius: 50px;
+}
+
+.circle:hover {
+  background-color: indianred;
+}
+
+p {
+  font-size: xx-large;
+}
+
+.vform {
+  padding-top: 60px;
+}
+
+.elem.error {
+  background-color: lightcoral;
+}
